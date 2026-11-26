@@ -678,6 +678,18 @@
         </div>
       </section>
 
+      <!-- 合同生成器 -->
+      <section class="panel" data-panel="contract">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--ink-3)">网价自动取本工作台数据 · 合同与供应商台账只存在本机浏览器</span>
+          <div class="spacer" style="margin-left:auto"></div>
+          <a class="btn sm" id="contractOpen" href="contract/index.html" target="_blank" rel="noopener"
+             style="text-decoration:none;display:inline-flex;align-items:center">新窗口打开 ↗</a>
+        </div>
+        <iframe id="contractFrame" title="采购合同生成器"
+          style="width:100%;height:calc(100vh - 190px);min-height:620px;border:1px solid var(--line);border-radius:12px;display:block;background:#F2F7FE"></iframe>
+      </section>
+
       <!-- 应急采购批次（模块已下线） -->
 
       <!-- 需求反馈 -->
@@ -1028,6 +1040,7 @@ const NAV = [
   { group:'功能', items:[
     {key:'home',  ico:'水', label:'工作台首页'},
     {key:'query', ico:'⛽', label:'网价查询'},
+    {key:'contract', ico:'📝', label:'合同生成器'},
     {key:'oil',   ico:'🌐', label:'国际油价'},
     {key:'ndrc',  ico:'🏛', label:'各省发改委价格'},
     {key:'req',   ico:'✎', label:'需求反馈'},
@@ -1037,6 +1050,7 @@ const NAV = [
 const TABS = [
   {key:'home',  label:'工作台首页', closable:false},
   {key:'query', label:'网价查询', closable:true},
+  {key:'contract', label:'合同生成器', closable:true},
   {key:'oil',   label:'国际油价', closable:true},
   {key:'ndrc',  label:'各省发改委价格', closable:true},
   {key:'req',   label:'需求反馈', closable:true},
@@ -1047,7 +1061,7 @@ let openSoonTab = null;
 
 // 所有功能都支持置顶；从 NAV 动态派生，后续新增功能自动带星标
 const PINNABLE = NAV.flatMap(g=>g.items.map(it=>it.key));
-const TAB_ICO = {query:'⛽', oil:'🌐', ndrc:'🏛', req:'✎', soon:'◈'};
+const TAB_ICO = {query:'⛽', contract:'📝', oil:'🌐', ndrc:'🏛', req:'✎', soon:'◈'};
 let pinnedKeys = JSON.parse(localStorage.getItem('wb_pinned')||'[]');
 let recentKeys = JSON.parse(localStorage.getItem('wb_recent')||'[]');
 
@@ -1138,14 +1152,20 @@ function openTab(key){
               : (TABS.find(t=>t.key===key)?.label || key);
   $('#crumb').innerHTML = `工作台 / <b>${esc(label)}</b>`;
   if(key==='query') renderQuery();
+  if(key==='contract') ensureContractFrame();
   if(key==='oil') renderOil();
   if(key==='ndrc') renderNdrc();
   if(key==='req') renderReq();
   if(key==='home') renderHome();
 }
 
-function trackRecent(key){
-  if(key==='soon' || key==='home') return;   // 首页常驻，不计入最近使用
+/* 合同生成器：首次进入才加载 iframe，避免首页多背 500KB */
+function ensureContractFrame(){
+  const f = $('#contractFrame');
+  if(f && !f.dataset.loaded){ f.src = 'contract/index.html'; f.dataset.loaded = '1'; }
+}
+
+function trackRecent(key){  if(key==='soon' || key==='home') return;   // 首页常驻，不计入最近使用
   recentKeys = recentKeys.filter(k=>k!==key);
   recentKeys.unshift(key);
   if(recentKeys.length>6) recentKeys=recentKeys.slice(0,6);
@@ -1342,6 +1362,7 @@ async function saveSetting(k, v){
    ============================================================ */
 const MODULES = [
   {key:'query', ico:'⛽', title:'网价查询', desc:'16 城中石油柴油网价 · 双站对照', live:true},
+  {key:'contract', ico:'📝', title:'合同生成器', desc:'采购合同自动套模板 · 一键导出 Word', live:true},
   {key:'oil',   ico:'🌐', title:'国际油价', desc:'WTI / 布伦特 · 近3个月日度 + 未来1周预测', live:true},
   {key:'ndrc',  ico:'🏛', title:'各省发改委价格', desc:'各省柴油批发/零售限价 · 近一年', live:true},
   {key:'req',   ico:'✎', title:'需求反馈', desc:'开发想法记录 · 需求台账', live:true},
